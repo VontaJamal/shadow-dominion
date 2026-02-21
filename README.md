@@ -1,8 +1,8 @@
-# Shadow Dominion 🃏
+# Grimoire 📖
 
-**Learn anything. Remember everything. On your terms.**
+**Open your grimoire. Learn anything. Remember everything.**
 
-Shadow Dominion is a flashcard system built around one idea: you should control exactly what you study and how you study it.
+Grimoire is a flashcard system built around one idea: you should control exactly what you study and how you study it.
 
 ## What It Does
 
