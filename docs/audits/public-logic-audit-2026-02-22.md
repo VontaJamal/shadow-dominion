@@ -34,6 +34,7 @@
 | P1 | Build/lint command contract | `npm run check` and `npm run build` failed when OAuth env vars were unset | Fixed | Added lifecycle-aware env validation skip for build/check/lint paths while preserving runtime validation gate |
 | P1 | Updater workflow reliability | Updater always based on `main`, attempted PR on no-change runs, and could hard-fail when token lacked write | Fixed | Added dynamic default-branch resolution, submodule change detection, and graceful write-permission fallback |
 | P1 | Default branch public-logic coverage gap | No default-branch workflow validated published command surface | Fixed | Added `Public Logic CI` on main push/PR for install, README link validation, check, and build |
+| P1 | Submodule path integrity | Gitlink still pointed to `design/rinshari-ui` while `.gitmodules` declared `design/rinshari-eye`, breaking recursive checkout | Fixed | Renamed submodule gitlink path to `design/rinshari-eye` to match `.gitmodules` |
 
 ## Residual Risks / Follow-ups
 - Dependency audit still reports high/critical vulnerabilities in transitive paths; triage in a dedicated dependency-risk wave to avoid accidental breaking upgrades.
