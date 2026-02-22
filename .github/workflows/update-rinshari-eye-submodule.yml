@@ -19,6 +19,13 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      - name: Resolve default branch
+        id: default-branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "base=${{ github.event.repository.default_branch }}" >> "$GITHUB_OUTPUT"
+
       - name: Update submodule pointer to latest main
         shell: bash
         run: |
@@ -28,12 +35,26 @@ jobs:
           git -C design/rinshari-eye fetch origin main
           git -C design/rinshari-eye checkout origin/main
 
+      - name: Detect submodule changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- design/rinshari-eye; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create pull request
+        id: cpr
+        if: steps.changes.outputs.has_changes == 'true'
+        continue-on-error: true
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: codex/bump-rinshari-eye-submodule
-          base: main
+          base: ${{ steps.default-branch.outputs.base }}
           title: "chore: bump rinshari-eye submodule"
           commit-message: "chore: bump rinshari-eye submodule"
           body: |
@@ -43,3 +64,14 @@ jobs:
             design-system
           add-paths: |
             design/rinshari-eye
+
+      - name: No updates required
+        if: steps.changes.outputs.has_changes == 'false'
+        run: echo "No submodule pointer changes detected. Skipping PR creation."
+
+      - name: Graceful fallback when PR creation cannot write
+        if: steps.changes.outputs.has_changes == 'true' && steps.cpr.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::warning::Submodule pointer changed, but PR creation could not complete (likely token permission limits)."
+          echo "::warning::Create a PR manually from branch codex/bump-rinshari-eye-submodule if automation cannot write."

@@ -1,0 +1,66 @@
+name: Public Logic CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-public-logic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate README links
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          import re
+          import sys
+
+          readme = pathlib.Path("README.md")
+          text = readme.read_text(encoding="utf-8")
+          missing = []
+
+          for match in re.finditer(r"\[[^\]]+\]\(([^)]+)\)", text):
+            target = match.group(1).split("#", 1)[0].strip()
+            if not target or target.startswith(("http://", "https://", "mailto:")):
+              continue
+            if not (readme.parent / target).exists():
+              missing.append(target)
+
+          if missing:
+            for target in missing:
+              print(f"Missing relative link target in README.md: {target}")
+            sys.exit(1)
+          PY
+
+      - name: Check lint and types
+        env:
+          SKIP_ENV_VALIDATION: "1"
+        run: npm run check
+
+      - name: Build
+        env:
+          SKIP_ENV_VALIDATION: "1"
+        run: npm run build
